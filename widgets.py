@@ -146,6 +146,8 @@ class PhotoViewer(QGraphicsView):
         self.minpoint_count = 0
         self.list_point_min = []
         self.list_point_plus = []
+        self.point_size = 15
+        self.text_size = 15
 
         self.setMouseTracking(True)
         self.origin = QPoint()
@@ -241,6 +243,9 @@ class PhotoViewer(QGraphicsView):
             self._empty = False
             self.setDragMode(QGraphicsView.ScrollHandDrag)
             self._photo.setPixmap(pixmap)
+
+            self.point_size = pixmap.width()/100
+            self.text_size = pixmap.width()/100
         else:
             self._empty = True
             self.setDragMode(QGraphicsView.NoDrag)
@@ -324,22 +329,96 @@ class PhotoViewer(QGraphicsView):
         self.draw_ellipse(self._current_point)
         return self._current_point
 
+
     def draw_ellipse(self, point, type):
+        # test color
+        image = self._photo.pixmap().toImage()
+
+        sum_red, sum_green, sum_blue = 0, 0, 0
+        region_size = 20
+
+        # Define the region around the point
+        x_start = max(0, int(point.x()) - region_size // 2)
+        y_start = max(0, int(point.y()) - region_size // 2)
+
+        x_end = min(image.width(), int(point.x()) + region_size // 2)
+        y_end = min(image.height(), int(point.y()) + region_size // 2)
+
+        num_pixels = (x_end - x_start) * (y_end - y_start)
+
+        # Iterate over all the pixels in this region
+        for x in range(x_start, x_end):
+            for y in range(y_start, y_end):
+                pixel_color = image.pixelColor(x, y)
+                sum_red += pixel_color.red()
+                sum_green += pixel_color.green()
+                sum_blue += pixel_color.blue()
+
+        # Calculate the average RGB value for the entire region
+        avg_rgb = (sum_red + sum_green + sum_blue) / (3 * num_pixels)
+
+        # Depending on the average value, set the text color
+        if avg_rgb > 125:
+            text_color = QColor(Qt.black)
+        else:
+            text_color = QColor(Qt.white)
+
         if type == 'plus':
             color = QColor(Qt.cyan)
             text_item = self._scene.addText(str(self.pluspoint_count))
         else:
             color = QColor(Qt.red)
             text_item = self._scene.addText(str(self.minpoint_count))
-        self._scene.addEllipse(point.x() - 5, point.y() - 5, 10, 10, QPen(color), color)
 
-        text_item.setDefaultTextColor(color)
-        text_item.setPos(point.x() + 10, point.y() - 10)
+        self._scene.addEllipse(point.x() - self.point_size / 2, point.y() - self.point_size / 2, self.point_size,
+                               self.point_size, QPen(color), color)
+
+        text_item.setDefaultTextColor(text_color)
+        text_item.setPos(point.x(), point.y())
 
         font = QFont()
-        font.setPointSize(15)  # Change 20 to your desired font size
+        font.setPointSize(self.text_size)
+        font.setBold(True)  # Make the text bold
         text_item.setFont(font)
 
+    def draw_ellipse_bis(self, point, type):
+        if type == 'plus':
+            color = QColor(Qt.cyan)
+            text = str(self.pluspoint_count)
+        else:
+            color = QColor(Qt.red)
+            text = str(self.minpoint_count)
+
+        self._scene.addEllipse(point.x() - self.point_size / 2, point.y() - self.point_size / 2, self.point_size,
+                               self.point_size, QPen(color), color)
+
+        font = QFont()
+        font.setPointSize(self.text_size)
+        font.setBold(True)  # Make the text bold
+
+        # Calculate text dimensions
+        metrics = QFontMetrics(font)
+        text_width = metrics.horizontalAdvance(text)
+        text_height = metrics.height()
+
+        # Create an image to render the outlined text
+        image = QImage(text_width + 4, text_height + 4, QImage.Format_ARGB32)  # Added padding for the outline
+        image.fill(Qt.transparent)
+
+        painter = QPainter(image)
+        painter.setFont(font)
+        painter.setPen(Qt.black)  # Outline color
+        painter.drawText(2, text_height, text)  # Draw the text with an offset to create an outline effect
+        painter.setPen(color)  # Actual text color
+        painter.drawText(1, text_height - 1, text)
+        painter.end()
+
+        # Convert the image to a pixmap and add it to the scene
+        pixmap = QPixmap.fromImage(image)
+        pixmap_item = QGraphicsPixmapItem(pixmap)
+        pixmap_item.setPos(point.x() + self.point_size, point.y() - self.point_size + (
+                    self.point_size - text_height) / 2)  # Center the text vertically
+        self._scene.addItem(pixmap_item)
 
     # mouse events
     def wheelEvent(self, event):
