@@ -1,5 +1,4 @@
 import os
-from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 import widgets as wid
@@ -36,6 +35,7 @@ class IamSamApp(QMainWindow):
         self.actionNegPoint.triggered.connect(self.add_neg_point)
         self.actionPlusPoint.triggered.connect(self.add_plus_point)
         self.actionSegment.triggered.connect(self.go_segment)
+        self.actionRemovePoints.triggered.connect(self.reset_points)
 
         self.viewer.end_pluspoint_selection.connect(self.plus_point_added)
         self.viewer.end_minpoint_selection.connect(self.min_point_added)
@@ -46,6 +46,7 @@ class IamSamApp(QMainWindow):
         self.add_icon(res.find('img/min.png'), self.actionNegPoint)
         self.add_icon(res.find('img/magic.png'), self.actionSegment)
         self.add_icon(res.find('img/hand.png'), self.actionHand_selector)
+        self.add_icon(res.find('img/reset.png'), self.actionRemovePoints)
 
     def add_icon(self, img_source, pushButton_object):
         """
@@ -80,6 +81,13 @@ class IamSamApp(QMainWindow):
     def update_model(self):
         i = self.comboBox.currentIndex()
         self.active_model = self.list_models[i]
+
+    def reset_points(self):
+        self.viewer.clean_scene()
+        self.viewer.list_point_plus = []
+        self.viewer.list_point_min = []
+        self.viewer.pluspoint_count = 0
+        self.viewer.minpoint_count = 0
 
     def add_neg_point(self):
         if self.actionNegPoint.isChecked():
@@ -131,7 +139,7 @@ class IamSamApp(QMainWindow):
         :param path:
         :return:
         """
-        self.reset_parameters()
+        self.reset_points()
 
         self.image_path = path
         self.viewer.setPhoto(QPixmap(path))

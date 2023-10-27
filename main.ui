@@ -49,6 +49,8 @@
    <addaction name="actionHand_selector"/>
    <addaction name="actionPlusPoint"/>
    <addaction name="actionNegPoint"/>
+   <addaction name="actionRemovePoints"/>
+   <addaction name="separator"/>
    <addaction name="actionSegment"/>
   </widget>
   <action name="actionLoadImage">
@@ -92,6 +94,11 @@
    </property>
    <property name="text">
     <string>Segment</string>
+   </property>
+  </action>
+  <action name="actionRemovePoints">
+   <property name="text">
+    <string>RemovePoints</string>
    </property>
   </action>
  </widget>
