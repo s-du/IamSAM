@@ -14,7 +14,7 @@ DEVICE = "cpu"
 model = FastSAM(sam_checkpoint)
 
 # Defining sam model
-sam_checkpoint = "sam_vit_h_4b8939.pth"
+sam_checkpoint = res.find('other/sam_vit_h_4b8939.pth')
 model_type = "vit_h"
 device = "cuda"
 sam = sam_model_registry[model_type](checkpoint=sam_checkpoint)
