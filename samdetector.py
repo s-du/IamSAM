@@ -22,22 +22,40 @@ sam = sam_model_registry[model_type](checkpoint=sam_checkpoint)
 sam.to(device=device)
 predictor = SamPredictor(sam)
 
-
-def do_sam(image, output_folder, x,y):
-    image = cv2.imread(image)
+#________________ SAM ____________________________________
+def do_sam(IMAGE_PATH, input_points, input_labels):
+    image = cv2.imread(IMAGE_PATH)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
     predictor.set_image(image)
 
-    input_point = np.array([[x, y]])
-    input_label = np.array([1])
-
     masks, scores, logits = predictor.predict(
-        point_coords=input_point,
-        point_labels=input_label,
+        point_coords=input_points,
+        point_labels=input_labels,
         multimask_output=True,
     )
 
+    return masks, scores
+
+
+def sam_show_mask(mask, ax, random_color=False):
+    if random_color:
+        color = np.concatenate([np.random.random(3), np.array([0.6])], axis=0)
+    else:
+        color = np.array([30 / 255, 144 / 255, 255 / 255, 0.6])
+    h, w = mask.shape[-2:]
+    mask_image = mask.reshape(h, w, 1) * color.reshape(1, 1, -1)
+    ax.imshow(mask_image)
+
+def sam_create_mask_image(mask, output_path):
+    color = np.concatenate([np.random.random(3) * 255, np.array([0.6])], axis=0)
+    h, w = mask.shape[-2:]
+    mask_image = mask.reshape(h, w, 1) * color.reshape(1, 1, -1)
+
+    cv2.imwrite(output_path, mask_image)
+
+
+#________________ FAST SAM ____________________________________
 def do_fast_sam(IMAGE_PATH, input_points, input_labels):
     # input_point = np.array([[x, y]])
     # input_label = np.array([1])
@@ -50,11 +68,9 @@ def do_fast_sam(IMAGE_PATH, input_points, input_labels):
     return prompt_process, ann
 
 
-def create_mask_image(ann, output):
+def fastsam_create_mask_image(ann, output_path):
     # New array to store RGB values
     shape = ann.shape
-
-    print(shape)
     mask = np.zeros((shape[1], shape[2], 3), dtype=np.uint8)
 
     # Generate a random RGB color
@@ -64,7 +80,6 @@ def create_mask_image(ann, output):
     mask[ann.squeeze()] = random_color
     mask[~ann.squeeze()] = [0, 0, 0]
 
-    cv2.imshow('test', mask)
-    cv2.waitKey(0)
+    cv2.imwrite(output_path, mask)
 
     return mask

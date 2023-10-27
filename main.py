@@ -5,6 +5,7 @@ from PySide6.QtWidgets import *
 import widgets as wid
 import resources as res
 import samdetector as sam
+import numpy as np
 
 class IamSamApp(QMainWindow):
     def __init__(self):
@@ -34,7 +35,7 @@ class IamSamApp(QMainWindow):
         self.actionLoadImage.triggered.connect(self.get_image)
         self.actionNegPoint.triggered.connect(self.add_neg_point)
         self.actionPlusPoint.triggered.connect(self.add_plus_point)
-        self.actionSegment.triggered.connect(self.go_fast)
+        self.actionSegment.triggered.connect(self.go_segment)
 
         self.viewer.end_pluspoint_selection.connect(self.plus_point_added)
         self.viewer.end_minpoint_selection.connect(self.min_point_added)
@@ -51,24 +52,35 @@ class IamSamApp(QMainWindow):
         Function to add an icon to a pushButton
         """
         pushButton_object.setIcon(QIcon(img_source))
-    def go_fast(self):
+    def go_segment(self):
+        # get type of model to use
         plus_pts = self.viewer.list_point_plus
         min_pts = self.viewer.list_point_min
 
         glob_list = plus_pts + min_pts
-
         n_first_elements = [1] * len(plus_pts)
         m_next_elements = [0] * len(min_pts)
         labels = n_first_elements + m_next_elements
         print(labels)
 
-        # launch FastSAM
-        p, ann = sam.do_fast_sam(self.image_path, glob_list, labels)
-        sam.create_mask_image(ann, '')
+        if self.active_model == 'FASTSAM':
+
+            # launch FastSAM
+            p, ann = sam.do_fast_sam(self.image_path, glob_list, labels)
+            output_path = 'results_fastsam.jpg'
+            sam.fastsam_create_mask_image(ann, output_path)
+
+        else:
+            masks, scores = sam.do_sam(self.image_path, np.array(glob_list), np.array(labels))
+            output_path = 'results_sam.jpg'
+            sam.sam_create_mask_image(masks[0], output_path)
+
+        self.viewer.compose_mask_image(output_path)
 
     def update_model(self):
         i = self.comboBox.currentIndex()
         self.active_model = self.list_models[i]
+
     def add_neg_point(self):
         if self.actionNegPoint.isChecked():
             self.viewer.select_point_min = True
@@ -78,8 +90,6 @@ class IamSamApp(QMainWindow):
         if self.actionPlusPoint.isChecked():
             self.viewer.select_point_plus = True
             self.viewer.toggleDragMode()
-
-
 
     def plus_point_added(self):
         interest_point = self.viewer._current_point
@@ -97,6 +107,7 @@ class IamSamApp(QMainWindow):
         y = interest_point.y()
         print(f'Added Pos point: {x},{y}')
         self.hand_pan()
+
     def reset_parameters(self):
         pass
     def get_image(self):
@@ -124,6 +135,7 @@ class IamSamApp(QMainWindow):
 
         self.image_path = path
         self.viewer.setPhoto(QPixmap(path))
+        self.viewer.set_base_image(path)
         self.image_loaded = True
 
         # enable action

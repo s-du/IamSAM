@@ -137,6 +137,9 @@ class PhotoViewer(QGraphicsView):
         self.setBackgroundBrush(QBrush(QColor(255, 255, 255)))
         self.setFrameShape(QFrame.NoFrame)
 
+        self.sourceImage = QImage()
+        self.destinationImage = QImage()
+
         self.select_point_plus = False
         self.select_point_min = False
         self.pluspoint_count = 0
@@ -211,6 +214,27 @@ class PhotoViewer(QGraphicsView):
             if isinstance(item, QGraphicsTextItem):
                 self._scene.removeItem(item)
 
+
+    def compose_mask_image(self, image_path):
+        self.destinationImage.load(image_path)
+        painter = QPainter(self.resultImage)
+        painter.setCompositionMode(QPainter.CompositionMode_Source)
+        painter.fillRect(self.resultImage.rect(), Qt.transparent)
+        painter.setCompositionMode(QPainter.CompositionMode_SourceOver)
+        painter.drawImage(0, 0, self.destinationImage)
+        painter.setCompositionMode(QPainter.CompositionMode_Screen)
+        painter.drawImage(0, 0, self.sourceImage)
+        painter.setCompositionMode(QPainter.CompositionMode_DestinationOver)
+        painter.fillRect(self.resultImage.rect(), QColor(255, 255, 255))
+        painter.end()
+
+        self.setPhoto(QPixmap.fromImage(self.resultImage))
+
+    def set_base_image(self, path):
+        self.sourceImage.load(path)
+        self.resultSize = self.sourceImage.size()
+        self.resultImage = QImage(self.resultSize, QImage.Format_ARGB32_Premultiplied)
+
     def setPhoto(self, pixmap=None):
         self._zoom = 0
         if pixmap and not pixmap.isNull():
@@ -222,6 +246,7 @@ class PhotoViewer(QGraphicsView):
             self.setDragMode(QGraphicsView.NoDrag)
             self._photo.setPixmap(QPixmap())
         self.fitInView()
+
 
     def toggleDragMode(self):
         if self.rect or self.select_point:
