@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import sys
 from fastsam import FastSAM, FastSAMPrompt
 from segment_anything import sam_model_registry, SamPredictor
