@@ -7,7 +7,10 @@ A small project for comparing the outputs of SAM (Segment Anything [[1]](#1)) an
 
 ## Principle
 The user can upload any picture, then add 'positive' and 'negative' points that will be used as prompt in FASTSAM or SAM algorithm.
-The tool creates a small output mask (jpg) in the folder, and allow the user to directly visualize the segmentation results.
+The tool creates a small output mask (jpg) in the folder, and allows the user to directly visualize the segmentation results.
+
+![](https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMGl4Z2dmbnpydnRibzlob3oyYXZlajk2NXoxMGJ0YTQyM2NieDcwbiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/srVUHHISZ8iWXoscZr/giphy.gif
+)
 
 ## Installation instructions
 1. Clone the repository:
